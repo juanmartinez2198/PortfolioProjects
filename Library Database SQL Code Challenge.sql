@@ -1,0 +1,231 @@
+-- Last part to the Learning SQL Code Challenge by Scott Simpson. --
+
+/*
+Skills used: Joins, CTE's, Temp Tables, Subqueries, Windows Functions, Aggregate Functions, Creating Views and Tables, Converting Data Types
+*/
+  
+--How many copies of Dracula can the library lend out? Answer: 2 --
+
+--First I will look for the COUNT of copies of Dracula the library owns. Answer: 3 --
+
+SELECT 
+    COUNT(Title)
+FROM 
+    Books
+WHERE 
+    Title = "Dracula";
+
+
+
+--Next, I will look for the COUNT of Dracula copies that are currently loaned outand have not been returned yet. Answer: 1 --
+
+SELECT COUNT(Books.Title) 
+FROM Books
+    JOIN
+    Loans ON Books.BookID = Loans.BookID
+ WHERE 
+    Books.Title = "Dracula" 
+    AND 
+    Loans.ReturnedDate IS NULL;
+
+
+-- Finally, I'll subtract the two numbers for a final count -- 
+
+SELECT 
+ ((SELECT 
+    COUNT(Title) 
+ FROM 
+    Books 
+ WHERE 
+    Title = "Dracula")) 
+ -
+ ((SELECT 
+    COUNT(Books.Title) 
+    FROM 
+        Books 
+     JOIN Loans ON 
+        Books.BookID = Loans.BookID WHERE Books.Title = "Dracula" AND Loans.ReturnedDate IS NULL)) 
+        AS "Dracula Copies Available";
+
+
+
+-- Add donated books to library's database --
+
+INSERT INTO Books 
+    (Title, Author, Published, Barcode)
+VALUES
+    ("Dracula", "Bram Stoker", "1897", "4819277482"),
+    ("Gulliver's Travels", "Jonathan Swift", "1729", "4899254401");
+
+  
+
+--Check out specified books for a library patron --
+-- Here, I am identifying the Patron --
+
+SELECT * 
+FROM 
+    Patrons 
+WHERE 
+    LastName = "Vaan";
+
+
+
+-- Now I am entering the Loan information into the Loans table --
+
+INSERT INTO Loans 
+    (BookID, PatronID, LoanDate, DueDate)
+VALUES 
+((SELECT BookID FROM Books WHERE Barcode = "2855934983"),"50", "2020-08-25", "2020-09-08"),
+((SELECT BookID FROM Books WHERE Barcode = "4043822646"), "50", "2020-08-25", "2020-09-08");
+
+
+
+-- Now I am JOINING the Books, Loans and Patrons tables to verify that the Patron's loaned books are showing up and have been entered correctly --
+
+SELECT 
+    Patrons.FirstName, 
+    Patrons.LastName, 
+    Patrons.Email, 
+    Books.Title, 
+    Loans.LoanDate, 
+    Loans.DueDate, 
+    Loans.ReturnedDate
+FROM 
+    Loans
+JOIN Books ON 
+    Loans.BookID = Books.BookID
+JOIN Patrons ON 
+    Patrons.PatronID = Loans.PatronID
+WHERE 
+    Patrons.PatronID = "50"
+ORDER BY 
+    Loans.LoanDate DESC;
+
+
+  
+-- Generate a report of books due on July 13th 2020 with patron contact information 
+
+SELECT 
+    Patrons.LastName, 
+    Patrons.FirstName, 
+    Patrons.Email, 
+    Books.Title, 
+    Loans.LoanDate, 
+    Loans.DueDate
+FROM 
+    Loans
+JOIN 
+    Books 
+ON Loans.BookID = Books.BookID
+JOIN 
+    Patrons
+ON Patrons.PatronID = Loans.PatronID
+WHERE 
+    Loans.DueDate = "2020-07-13" 
+    AND 
+    Loans.ReturnedDate IS NULL
+ORDER BY 
+    Patrons.LastName;
+
+  
+--Return the books found in the return bin on July 5th 2020 --
+--I am using the update function to add the returned date to the loaned out books --
+
+UPDATE 
+    Loans 
+ SET 
+    ReturnedDate = "2020-07-05"
+WHERE 
+    BookID = (SELECT BookID from Books WHERE Barcode = "6435968624")
+AND 
+    ReturnedDate IS NULL;
+
+UPDATE 
+    Loans 
+SET 
+    ReturnedDate = "2020-07-05"
+WHERE 
+    BookID = (SELECT BookID from Books WHERE Barcode = "5677520613")
+AND 
+    ReturnedDate IS NULL;
+
+UPDATE 
+    Loans 
+SET 
+    ReturnedDate = "2020-07-05"
+WHERE 
+    BookID = (SELECT BookID from Books WHERE Barcode = "8730298424")
+AND 
+    ReturnedDate IS NULL;
+
+
+ 
+-- Create a report showing the 10 patrons who have checked out the least amount of books --
+
+SELECT 
+    Patrons.FirstName,  
+    Patrons.LastName, 
+    Patrons.Email, 
+    COUNT(Loans.LoanID) AS "Total_Books_Loaned"
+FROM 
+    Patrons
+JOIN 
+    Loans
+ON Patrons.PatronID = Loans.PatronID
+GROUP BY 
+    Patrons.PatronID
+ORDER BY 
+    COUNT(Loans.LoanID) ASC 
+LIMIT 10;
+
+
+
+ 
+-- Create a list of books from the 1890s that are currently available --
+
+SELECT
+    Books.Title, 
+    Books.Author, 
+    Books.Published
+FROM 
+    Books
+JOIN 
+    Loans 
+ ON Books.BookID = Loans.BookID
+WHERE 
+    Published < 1900 AND Published > 1889
+AND 
+    Loans.ReturnedDate IS NOT NULL
+GROUP BY 
+    Books.BookID;
+
+ 
+--Create a report showing how many books were published each year. Order DESC --
+
+SELECT 
+    Published, 
+    COUNT(DISTINCT (Title)) AS "pubdate"
+FROM 
+    Books
+GROUP BY 
+    Published
+ORDER BY 
+    pubdate DESC;
+
+ 
+-- Create a report shwoing the five most popular books to check out. Order ASC --
+
+SELECT 
+    COUNT(Loans.LoanID) AS "LoanCount", 
+    Books.Title
+FROM 
+    Loans
+JOIN 
+    Books 
+ON Loans.BookID = Books.BookID
+GROUP BY 
+    Books.Title
+ORDER BY 
+    LoanCount DESC
+LIMIT 5;
+--
