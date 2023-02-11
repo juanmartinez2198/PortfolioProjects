@@ -9,7 +9,7 @@ Skills used: Nested Queries, Joins, Sub Table, CTE's, Temp Tables, Windows Funct
 
 SELECT * 
 FROM Customer
-WHERE city = 'Los Angeles';
+WHERE city = 'Los Angeles' ;
 
 
 
@@ -372,20 +372,3 @@ SELECT service_name, units_provided
 FROM Services
 ORDER BY units_provided DESC
 LIMIT 10;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
