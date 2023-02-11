@@ -1,0 +1,391 @@
+/*
+Skills used: Nested Queries, Joins, Sub Table, CTE's, Temp Tables, Windows Functions, Aggregate Functions, Creating Views and Tables, Converting Data Types, Updating Information
+*/
+
+
+
+
+-- Select all columns from the "Customer" table where the customer's city is "Los Angeles".--
+
+SELECT * 
+FROM Customer
+WHERE city = 'Los Angeles';
+
+
+
+-- Select the names and email addresses of customers who have made a purchase of over $500. --
+
+SELECT name, email
+FROM Customer
+WHERE total_purchase > 500;
+
+
+
+-- Select the average total purchase for all customers.--
+
+SELECT AVG(total_purchase)
+FROM Customer;
+
+
+
+--Select the names of all customers who have purchased a product with the name "iphone". --
+
+SELECT name
+FROM Customer
+WHERE EXISTS (
+  SELECT 1
+  FROM Product
+  WHERE Customer.customer_id = Product.customer_id
+  AND product_name = 'iphone');
+  
+  
+  
+--Nested Query:--
+ 
+SELECT Customer.Name, Product.Product_Name
+FROM Customer
+WHERE Customer.Customer_ID IN (SELECT Customer_ID
+                               FROM Product
+                               WHERE Product.Product_Price > 500);
+                               
+                               
+                               
+--Common Table Expression (CTE):--
+ 
+WITH CTE AS (
+SELECT Customer.Name, Product.Product_Name, Product.Product_Price
+FROM Customer
+INNER JOIN Product ON Customer.Customer_ID = Product.Customer_ID)
+SELECT *
+FROM CTE
+WHERE Product_Price > 500;
+
+
+
+-- Sub-table:--
+ 
+SELECT Customer.Name, SubTable.Product_Name
+FROM Customer
+INNER JOIN (
+  SELECT Customer_ID, Product_Name
+  FROM Product
+) AS SubTable ON Customer.Customer_ID = SubTable.Customer_ID;
+
+
+
+--Inner Join:--
+ 
+SELECT Customer.Name, Product.Product_Name, Services.Service_Name
+FROM Customer
+INNER JOIN Product ON Customer.Customer_ID = Product.Customer_ID
+INNER JOIN Services ON Customer.Customer_ID = Services.Customer_ID;
+
+
+
+--Left Join:--
+ 
+SELECT Customer.Name, Product.Product_Name, Services.Service_Name
+FROM Customer
+LEFT JOIN Product ON Customer.Customer_ID = Product.Customer_ID
+LEFT JOIN Services ON Customer.Customer_ID = Services.Customer_ID;
+
+
+
+-- Right Join:--
+ 
+SELECT Customer.Name, Product.Product_Name, Services.Service_Name
+FROM Customer
+RIGHT JOIN Product ON Customer.Customer_ID = Product.Customer_ID
+RIGHT JOIN Services ON Customer.Customer_ID = Services.Customer_ID;
+
+
+
+--Full Outer Join:--
+ 
+SELECT Customer.Name, Product.Product_Name, Services.Service_Name
+FROM Customer
+FULL OUTER JOIN Product ON Customer.Customer_ID = Product.Customer_ID
+FULL OUTER JOIN Services ON Customer.Customer_ID = Services.Customer_ID;
+
+
+
+--Cross Join:--
+ 
+SELECT Customer.Name, Product.Product_Name
+FROM Customer
+CROSS JOIN Product;
+
+
+
+--Select the product names, their price and the number of units sold for all products.--
+
+SELECT product_name, price, units_sold
+FROM Product;
+
+
+
+--Select the total number of services provided to customers.--
+
+SELECT SUM(units_provided)
+FROM Services;
+
+
+
+--Select the names of customers who have purchased a product and used a service.--
+
+SELECT DISTINCT Customer.name
+FROM Customer
+JOIN Product
+ON Customer.customer_id = Product.customer_id
+JOIN Services
+ON Customer.customer_id = Services.customer_id;
+
+
+
+--Select the names and email addresses of customers who have made a purchase and used a service within the last 30 days.--
+ 
+SELECT name, email
+FROM Customer
+WHERE EXISTS (
+  SELECT 1
+  FROM Product
+  WHERE Customer.customer_id = Product.customer_id
+  AND purchase_date BETWEEN NOW() - INTERVAL 30 DAY AND NOW()
+)
+AND EXISTS (
+  SELECT 1
+  FROM Services
+  WHERE Customer.customer_id = Services.customer_id
+  AND service_date BETWEEN NOW() - INTERVAL 30 DAY AND NOW());
+
+
+
+--Select the names of customers who have used a service but have not made a purchase.--
+
+SELECT DISTINCT name
+FROM Customer
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM Product
+  WHERE Customer.customer_id = Product.customer_id
+)
+AND EXISTS (
+  SELECT 1
+  FROM Services
+  WHERE Customer.customer_id = Services.customer_id);
+
+
+
+--Select the total sales made by each customer.--
+ 
+SELECT name, SUM(price * units_sold) AS total_sales
+FROM Customer
+JOIN Product
+ON Customer.customer_id = Product.customer_id
+GROUP BY Customer.customer_id;
+
+
+
+--Select the total services provided to each customer.--
+ 
+SELECT name, SUM(units_provided) AS total_services
+FROM Customer
+JOIN Services
+ON Customer.customer_id = Services.customer_id
+GROUP BY Customer.customer_id;
+
+
+
+--Select the names of customers who have made a purchase but have not used a service.--
+ 
+SELECT DISTINCT name
+FROM Customer
+WHERE EXISTS (
+  SELECT 1
+  FROM Product
+  WHERE Customer.customer_id = Product.customer_id
+)
+AND NOT EXISTS (
+  SELECT 1
+  FROM Services
+  WHERE Customer.customer_id = Services.customer_id);
+
+
+
+--Select the names of customers and the total amount spent on products and services.--
+ 
+SELECT name, 
+  (
+    SELECT SUM(price * units_sold)
+    FROM Product
+    WHERE Customer.customer_id = Product.customer_id
+  ) +
+  (
+    SELECT SUM(price_per_unit * units_provided)
+    FROM Services
+    WHERE Customer.customer_id = Services.customer_id
+  ) AS total_spent
+FROM Customer;
+
+
+
+--Select the names and email addresses of customers who have made a purchase of a product with a price greater than $1000.--
+ 
+SELECT DISTINCT name, email
+FROM Customer
+WHERE EXISTS (
+  SELECT 1
+  FROM Product
+  WHERE Customer.customer_id = Product.customer_id
+  AND price > 1000);
+
+
+
+-- Select the names and total amount spent of customers who have made a purchase but have not used a service.--
+ 
+SELECT name, SUM(price * units_sold) AS total_spent
+FROM Customer
+JOIN Product
+ON Customer.customer_id = Product.customer_id
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM Services
+  WHERE Customer.customer_id = Services.customer_id)
+GROUP BY Customer.customer_id;    
+
+
+
+--Select the average price of products purchased by each customer.--
+ 
+SELECT name, AVG(price) as avg_price
+FROM Customer
+JOIN Product
+ON Customer.customer_id = Product.customer_id
+GROUP BY Customer.customer_id;
+
+
+
+-- Select the total number of products sold for each product category.-- 
+
+SELECT product_category, SUM(units_sold) as total_units_sold
+FROM Product
+GROUP BY product_category;
+
+
+
+-- Select the total revenue generated from product sales.--
+ 
+SELECT SUM(price * units_sold) AS total_revenue
+FROM Product;
+
+
+
+Select the names of customers who have used a service and the total amount spent on services.
+ 
+SELECT name, SUM(price_per_unit * units_provided) AS total_spent
+FROM Customer
+JOIN Services
+ON Customer.customer_id = Services.customer_id
+GROUP BY Customer.customer_id;
+
+
+
+--Select the total number of services provided for each service category.--
+ 
+SELECT service_category, SUM(units_provided) as total_units_provided
+FROM Services
+GROUP BY service_category;
+
+
+
+-- Select the total revenue generated from service sales.--
+ 
+SELECT SUM(price_per_unit * units_provided) AS total_revenue
+FROM Services;
+
+
+
+-- Select the names of customers who have purchased a product in a specific category.-- 
+ 
+SELECT DISTINCT name
+FROM Customer
+WHERE EXISTS (
+  SELECT 1
+  FROM Product
+  WHERE Customer.customer_id = Product.customer_id
+  AND product_category = 'electronics');
+  
+  
+  
+--Select the names of customers who have used a service in a specific category.--
+ 
+SELECT DISTINCT name
+FROM Customer
+WHERE EXISTS (
+  SELECT 1
+  FROM Services
+  WHERE Customer.customer_id = Services.customer_id
+  AND service_category = 'maintenance');
+  
+  
+  
+--Select the most frequently purchased product by customers.--
+ 
+SELECT product_name, MAX(units_sold) as most_frequent
+FROM Product;
+
+
+
+--Select the least frequently purchased product by customers.--
+ 
+SELECT product_name, MIN(units_sold) as least_frequent
+FROM Product;
+
+
+
+--Select the most frequently used service by customers.--
+ 
+SELECT service_name, MAX(units_provided) as most_frequent
+FROM Services;
+
+
+
+-- Select the least frequently used service by customers.--
+ 
+SELECT service_name, MIN(units_provided) as least_frequent
+FROM Services;
+
+
+
+-- Select the top 10 most frequently purchased products by customers.-- 
+ 
+SELECT product_name, units_sold
+FROM Product
+ORDER BY units_sold DESC
+LIMIT 10;
+
+
+
+--Select the top 10 most frequently used services by customers.--
+ 
+SELECT service_name, units_provided
+FROM Services
+ORDER BY units_provided DESC
+LIMIT 10;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
