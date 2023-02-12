@@ -1,9 +1,3 @@
-SELECT *
-FROM dbo.Customer
-WHERE city = 'Los Angeles';
-
-
-
 /*
 Skills used: Nested Queries, Joins, Sub Table, CTE's, Temp Tables, Windows Functions, Aggregate Functions, Creating Views and Tables, Converting Data Types, Updating Information
 */
