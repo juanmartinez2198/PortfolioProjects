@@ -48,7 +48,7 @@ SELECT *
 FROM 
     dishes
 WHERE 
-    Type <> "Beverage"
+    Type <> "Beverage" 
 ORDER BY 
     Type;
 
