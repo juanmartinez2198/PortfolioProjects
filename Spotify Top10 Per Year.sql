@@ -1,6 +1,6 @@
-/*
+ /*
 Spotify Top 10 Data Exploration 
-*/
+ */
 
 
 -- Selecting Data that we are going to be starting with -- 
