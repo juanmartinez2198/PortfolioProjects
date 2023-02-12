@@ -1,7 +1,7 @@
-/*
+ /*
 Netflix Data Exploration
 Skills Used: Case Statements, Wildcard Characters, Counts, Distinct Queries, Aggregate Functions
-*/
+ */
 
 
 
